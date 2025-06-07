@@ -1,0 +1,109 @@
+/* Styles for the verification modal */
+.verification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.verification-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.verification-content h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.code-input-container {
+  margin: 1.5rem 0;
+}
+
+#verification-code {
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  width: 150px;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+}
+
+.verification-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.btn-verify,
+.btn-cancel {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-verify {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-verify:hover {
+  background-color: #219653;
+}
+
+.btn-cancel {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #c0392b;
+}
+
+/* Enhanced notification styles */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  z-index: 1001;
+  display: none;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #27ae60;
+}
+
+.notification.error {
+  background-color: #e74c3c;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

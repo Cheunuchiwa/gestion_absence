@@ -1,0 +1,470 @@
+<main className="min-h-screen p-8 bg-slate-50">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 text-slate-800">Statistiques d&apos;absentéisme</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-700">Absences par étudiant</h2>
+            <div id="statistique" className="alerte-overlay">
+              <canvas id="barChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-700">Répartition des absences</h2>
+            <div className="alerte-overlay">
+              <canvas id="pieChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-700">Évolution des absences</h2>
+            <div className="alerte-overlay">
+              <canvas id="lineChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-700">Taux d&apos;absentéisme par matière</h2>
+            <div className="alerte-overlay">
+              <canvas id="horizontalBarChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+  // Données fictives pour les graphiques
+  const etudiants = [
+    { nom: "Dupont", absences: 5, mois: [1, 0, 2, 1, 1, 0] },
+    { nom: "Martin", absences: 3, mois: [0, 1, 0, 1, 1, 0] },
+    { nom: "Dubois", absences: 8, mois: [2, 1, 2, 1, 1, 1] },
+    { nom: "Bernard", absences: 2, mois: [0, 0, 1, 0, 1, 0] },
+    { nom: "Thomas", absences: 6, mois: [1, 2, 1, 0, 1, 1] },
+    { nom: "Petit", absences: 4, mois: [1, 0, 1, 1, 0, 1] },
+    { nom: "Robert", absences: 7, mois: [2, 1, 1, 1, 1, 1] },
+  ]
+
+  const matieres = [
+    { nom: "Mathématiques", taux: 12 },
+    { nom: "Français", taux: 8 },
+    { nom: "Histoire", taux: 15 },
+    { nom: "Sciences", taux: 6 },
+    { nom: "Anglais", taux: 10 },
+  ]
+
+  const mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"]
+
+  // Couleurs pour les graphiques
+  const colors = [
+    "#4F46E5",
+    "#7C3AED",
+    "#EC4899",
+    "#F59E0B",
+    "#10B981",
+    "#3B82F6",
+    "#8B5CF6",
+    "#F43F5E",
+    "#FBBF24",
+    "#34D399",
+  ]
+
+  // Graphique à barres - Absences par étudiant
+  drawBarChart()
+
+  // Graphique circulaire - Répartition des absences
+  drawPieChart()
+
+  // Graphique linéaire - Évolution des absences
+  drawLineChart()
+
+  // Graphique à barres horizontales - Taux d'absentéisme par matière
+  drawHorizontalBarChart()
+
+  // Fonction pour dessiner le graphique à barres
+  function drawBarChart() {
+    const canvas = document.getElementById("barChart")
+    if (!canvas || !canvas.getContext) return
+
+    const ctx = canvas.getContext("2d")
+    const width = canvas.width
+    const height = canvas.height
+    const barWidth = (width - 100) / etudiants.length
+    const maxAbsences = Math.max(...etudiants.map((e) => e.absences))
+    const scale = (height - 100) / maxAbsences
+
+    // Fond
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, width, height)
+
+    // Titre
+    ctx.fillStyle = "#1F2937"
+    ctx.font = "bold 16px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Nombre d'absences par étudiant", width / 2, 30)
+
+    // Axe Y
+    ctx.beginPath()
+    ctx.moveTo(50, 50)
+    ctx.lineTo(50, height - 50)
+    ctx.strokeStyle = "#94A3B8"
+    ctx.stroke()
+
+    // Graduations axe Y
+    ctx.textAlign = "right"
+    ctx.font = "12px Arial"
+    for (let i = 0; i <= maxAbsences; i += 2) {
+      const y = height - 50 - i * scale
+      ctx.beginPath()
+      ctx.moveTo(45, y)
+      ctx.lineTo(50, y)
+      ctx.stroke()
+      ctx.fillText(i.toString(), 40, y + 4)
+    }
+
+    // Axe X
+    ctx.beginPath()
+    ctx.moveTo(50, height - 50)
+    ctx.lineTo(width - 50, height - 50)
+    ctx.stroke()
+
+    // Barres
+    etudiants.forEach((etudiant, index) => {
+      const x = 50 + index * barWidth + 10
+      const barHeight = etudiant.absences * scale
+
+      // Barre avec dégradé
+      const gradient = ctx.createLinearGradient(0, height - 50 - barHeight, 0, height - 50)
+      gradient.addColorStop(0, colors[index % colors.length])
+      gradient.addColorStop(1, lightenColor(colors[index % colors.length], 30))
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(x, height - 50 - barHeight, barWidth - 20, barHeight)
+
+      // Bordure
+      ctx.strokeStyle = darkenColor(colors[index % colors.length], 20)
+      ctx.lineWidth = 1
+      ctx.strokeRect(x, height - 50 - barHeight, barWidth - 20, barHeight)
+
+      // Nom de l'étudiant
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "12px Arial"
+      ctx.textAlign = "center"
+      ctx.fillText(etudiant.nom, x + (barWidth - 20) / 2, height - 30)
+
+      // Nombre d'absences
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "bold 12px Arial"
+      ctx.fillText(etudiant.absences.toString(), x + (barWidth - 20) / 2, height - 50 - barHeight - 10)
+    })
+  }
+
+  // Fonction pour dessiner le graphique circulaire
+  function drawPieChart() {
+    const canvas = document.getElementById("pieChart")
+    if (!canvas || !canvas.getContext) return
+
+    const ctx = canvas.getContext("2d")
+    const width = canvas.width
+    const height = canvas.height
+    const centerX = width / 2
+    const centerY = height / 2
+    const radius = Math.min(width, height) / 2 - 60
+
+    // Fond
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, width, height)
+
+    // Titre
+    ctx.fillStyle = "#1F2937"
+    ctx.font = "bold 16px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Répartition des absences", width / 2, 30)
+
+    // Total des absences
+    const totalAbsences = etudiants.reduce((sum, etudiant) => sum + etudiant.absences, 0)
+
+    // Dessiner le camembert
+    let startAngle = 0
+    etudiants.forEach((etudiant, index) => {
+      const sliceAngle = (etudiant.absences / totalAbsences) * 2 * Math.PI
+
+      ctx.beginPath()
+      ctx.moveTo(centerX, centerY)
+      ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
+      ctx.closePath()
+
+      ctx.fillStyle = colors[index % colors.length]
+      ctx.fill()
+
+      ctx.strokeStyle = "#ffffff"
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Étiquette
+      const midAngle = startAngle + sliceAngle / 2
+      const labelRadius = radius * 0.7
+      const labelX = centerX + Math.cos(midAngle) * labelRadius
+      const labelY = centerY + Math.sin(midAngle) * labelRadius
+
+      const percentage = Math.round((etudiant.absences / totalAbsences) * 100)
+
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "bold 12px Arial"
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      ctx.fillText(`${percentage}%`, labelX, labelY)
+
+      startAngle += sliceAngle
+    })
+
+    // Légende
+    const legendX = width - 150
+    const legendY = height - 120
+
+    etudiants.forEach((etudiant, index) => {
+      const y = legendY + index * 20
+
+      // Carré de couleur
+      ctx.fillStyle = colors[index % colors.length]
+      ctx.fillRect(legendX, y, 15, 15)
+
+      // Nom de l'étudiant
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "12px Arial"
+      ctx.textAlign = "left"
+      ctx.textBaseline = "middle"
+      ctx.fillText(etudiant.nom, legendX + 25, y + 7)
+    })
+  }
+
+  // Fonction pour dessiner le graphique linéaire
+  function drawLineChart() {
+    const canvas = document.getElementById("lineChart")
+    if (!canvas || !canvas.getContext) return
+
+    const ctx = canvas.getContext("2d")
+    const width = canvas.width
+    const height = canvas.height
+
+    // Fond
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, width, height)
+
+    // Titre
+    ctx.fillStyle = "#1F2937"
+    ctx.font = "bold 16px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Évolution des absences", width / 2, 30)
+
+    // Calculer les absences totales par mois
+    const absencesParMois = mois.map((_, index) => {
+      return etudiants.reduce((sum, etudiant) => sum + etudiant.mois[index], 0)
+    })
+
+    const maxAbsences = Math.max(...absencesParMois)
+    const scaleY = (height - 100) / maxAbsences
+    const scaleX = (width - 100) / (mois.length - 1)
+
+    // Axe Y
+    ctx.beginPath()
+    ctx.moveTo(50, 50)
+    ctx.lineTo(50, height - 50)
+    ctx.strokeStyle = "#94A3B8"
+    ctx.stroke()
+
+    // Graduations axe Y
+    ctx.textAlign = "right"
+    ctx.font = "12px Arial"
+    for (let i = 0; i <= maxAbsences; i += 2) {
+      const y = height - 50 - i * scaleY
+      ctx.beginPath()
+      ctx.moveTo(45, y)
+      ctx.lineTo(50, y)
+      ctx.stroke()
+      ctx.fillText(i.toString(), 40, y + 4)
+    }
+
+    // Axe X
+    ctx.beginPath()
+    ctx.moveTo(50, height - 50)
+    ctx.lineTo(width - 50, height - 50)
+    ctx.stroke()
+
+    // Étiquettes des mois
+    ctx.textAlign = "center"
+    mois.forEach((mois, index) => {
+      const x = 50 + index * scaleX
+      ctx.fillText(mois, x, height - 30)
+    })
+
+    // Grille
+    ctx.strokeStyle = "#E2E8F0"
+    ctx.setLineDash([5, 5])
+    for (let i = 2; i <= maxAbsences; i += 2) {
+      const y = height - 50 - i * scaleY
+      ctx.beginPath()
+      ctx.moveTo(50, y)
+      ctx.lineTo(width - 50, y)
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+
+    // Ligne d'évolution
+    ctx.beginPath()
+    absencesParMois.forEach((absences, index) => {
+      const x = 50 + index * scaleX
+      const y = height - 50 - absences * scaleY
+
+      if (index === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    })
+
+    ctx.strokeStyle = "#4F46E5"
+    ctx.lineWidth = 3
+    ctx.stroke()
+
+    // Points
+    absencesParMois.forEach((absences, index) => {
+      const x = 50 + index * scaleX
+      const y = height - 50 - absences * scaleY
+
+      ctx.beginPath()
+      ctx.arc(x, y, 6, 0, 2 * Math.PI)
+      ctx.fillStyle = "#ffffff"
+      ctx.fill()
+      ctx.strokeStyle = "#4F46E5"
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Valeur
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "bold 12px Arial"
+      ctx.textAlign = "center"
+      ctx.fillText(absences.toString(), x, y - 15)
+    })
+  }
+
+  // Fonction pour dessiner le graphique à barres horizontales
+  function drawHorizontalBarChart() {
+    const canvas = document.getElementById("horizontalBarChart")
+    if (!canvas || !canvas.getContext) return
+
+    const ctx = canvas.getContext("2d")
+    const width = canvas.width
+    const height = canvas.height
+    const barHeight = (height - 100) / matieres.length
+    const maxTaux = Math.max(...matieres.map((m) => m.taux))
+    const scale = (width - 150) / maxTaux
+
+    // Fond
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, width, height)
+
+    // Titre
+    ctx.fillStyle = "#1F2937"
+    ctx.font = "bold 16px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Taux d'absentéisme par matière (%)", width / 2, 30)
+
+    // Axe X
+    ctx.beginPath()
+    ctx.moveTo(100, height - 50)
+    ctx.lineTo(width - 50, height - 50)
+    ctx.strokeStyle = "#94A3B8"
+    ctx.stroke()
+
+    // Graduations axe X
+    ctx.textAlign = "center"
+    ctx.font = "12px Arial"
+    for (let i = 0; i <= maxTaux; i += 5) {
+      const x = 100 + i * scale
+      ctx.beginPath()
+      ctx.moveTo(x, height - 45)
+      ctx.lineTo(x, height - 50)
+      ctx.stroke()
+      ctx.fillText(i.toString() + "%", x, height - 30)
+    }
+
+    // Barres
+    matieres.forEach((matiere, index) => {
+      const y = 70 + index * barHeight
+      const barWidth = matiere.taux * scale
+
+      // Barre avec dégradé
+      const gradient = ctx.createLinearGradient(100, 0, 100 + barWidth, 0)
+      gradient.addColorStop(0, colors[index % colors.length])
+      gradient.addColorStop(1, lightenColor(colors[index % colors.length], 30))
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(100, y, barWidth, barHeight - 15)
+
+      // Bordure
+      ctx.strokeStyle = darkenColor(colors[index % colors.length], 20)
+      ctx.lineWidth = 1
+      ctx.strokeRect(100, y, barWidth, barHeight - 15)
+
+      // Nom de la matière
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "12px Arial"
+      ctx.textAlign = "right"
+      ctx.textBaseline = "middle"
+      ctx.fillText(matiere.nom, 90, y + (barHeight - 15) / 2)
+
+      // Taux
+      ctx.fillStyle = "#1F2937"
+      ctx.font = "bold 12px Arial"
+      ctx.textAlign = "left"
+      ctx.fillText(matiere.taux + "%", 105 + barWidth, y + (barHeight - 15) / 2)
+    })
+  }
+
+  // Fonction pour éclaircir une couleur
+  function lightenColor(color, percent) {
+    const num = Number.parseInt(color.replace("#", ""), 16)
+    const amt = Math.round(2.55 * percent)
+    const R = (num >> 16) + amt
+    const G = ((num >> 8) & 0x00ff) + amt
+    const B = (num & 0x0000ff) + amt
+
+    return (
+      "#" +
+      (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+      )
+        .toString(16)
+        .slice(1)
+    )
+  }
+
+  // Fonction pour assombrir une couleur
+  function darkenColor(color, percent) {
+    const num = Number.parseInt(color.replace("#", ""), 16)
+    const amt = Math.round(2.55 * percent)
+    const R = (num >> 16) - amt
+    const G = ((num >> 8) & 0x00ff) - amt
+    const B = (num & 0x0000ff) - amt
+
+    return (
+      "#" +
+      (
+        0x1000000 +
+        (R > 0 ? (R < 255 ? R : 255) : 0) * 0x10000 +
+        (G > 0 ? (G < 255 ? G : 255) : 0) * 0x100 +
+        (B > 0 ? (B < 255 ? B : 255) : 0)
+      )
+        .toString(16)
+        .slice(1)
+    )
+  }
+})
+
+      </script>
+    </main>

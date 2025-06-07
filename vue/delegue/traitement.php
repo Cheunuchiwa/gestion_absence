@@ -1,0 +1,10 @@
+<?php
+    session_start();
+    if($_SESSION['role']=='etudiant'){
+        header('location:etudiant.php');
+        exit();
+    }else{
+        header('location:acceuilD.php');
+        exit();
+    }
+?>
